@@ -109,7 +109,7 @@ If everything goes well, it should begin displaying something!
 
 Yay!
 
-<img src="./docs/result.png" height="300"/>
+https://user-images.githubusercontent.com/20388082/114456652-7b004a80-9bb3-11eb-8057-2584dfc80393.mp4
 
 ## TODO
 - Add section about the Project Setup including the Pin Planner
