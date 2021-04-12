@@ -36,6 +36,15 @@ architecture rtl of VgaController is
   constant VDATA_END   : integer := 514;
   constant VLINE_END   : integer := 524;
 
+  constant H_EIGHTH  : integer := 640 / 8;
+  constant H_HALF    : integer := 640 / 2;
+  constant H_QUARTER : integer := 640 / 4;
+
+  constant V_EIGHTH  : integer := 480 / 8;
+  constant V_HALF    : integer := 480 / 2;
+  constant V_QUARTER : integer := 480 / 4;
+
+  -- Signals
   signal hcount : integer := 0;
   signal vcount : integer := 0;
   signal data   : std_logic_vector (2 downto 0);
@@ -87,19 +96,19 @@ begin
   process (vga_clk)
   begin
     if (rising_edge(vga_clk)) then
-      if (hcount < 223) then
+      if (hcount < HDATA_BEGIN + H_EIGHTH) then
         data <= COLOR_WHITE;
-      elsif (hcount < 303) then
+      elsif (hcount < HDATA_BEGIN + 2 * H_EIGHTH) then
         data <= COLOR_YELLOW;
-      elsif (hcount < 383) then
+      elsif (hcount < HDATA_BEGIN + 3 * H_EIGHTH) then
         data <= COLOR_BLUE;
-      elsif (hcount < 463) then
+      elsif (hcount < HDATA_BEGIN + 4 * H_EIGHTH) then
         data <= COLOR_GREEN;
-      elsif (hcount < 543) then
+      elsif (hcount < HDATA_BEGIN + 5 * H_EIGHTH) then
         data <= COLOR_PURPLE;
-      elsif (hcount < 623) then
+      elsif (hcount < HDATA_BEGIN + 6 * H_EIGHTH) then
         data <= COLOR_RED;
-      elsif (hcount < 703) then
+      elsif (hcount < HDATA_BEGIN + 7 * H_EIGHTH) then
         data <= COLOR_WATER;
       else
         data <= COLOR_BLACK;
