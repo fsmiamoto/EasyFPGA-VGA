@@ -32,10 +32,12 @@ architecture rtl of Game is
   constant H_QUARTER   : integer := 640 / 4;
 
   constant VDATA_BEGIN : integer := 34;
+  constant VDATA_END   : integer := 514;
   constant V_EIGHTH    : integer := 480 / 8;
   constant V_HALF      : integer := 480 / 2;
   constant V_QUARTER   : integer := 480 / 4;
 
+  -- VGA Clock - 25 MHz clock derived from the 50MHz built-in clock
   signal vga_clk : std_logic;
 
   signal rgb_input, rgb_output : std_logic_vector(2 downto 0);
@@ -59,7 +61,6 @@ architecture rtl of Game is
       vpos    : out integer
     );
   end component;
-
 begin
   controller : VgaController port map(
     clk     => vga_clk,
@@ -89,10 +90,23 @@ begin
   begin
     if (rising_edge(vga_clk)) then
       if (should_draw_square) then
-        rgb_input <= COLOR_BLUE;
-      else
         rgb_input <= COLOR_RED;
+      else
+        rgb_input <= COLOR_WATER;
       end if;
+    end if;
+
+    if (up = '0') then
+      square_y <= VDATA_BEGIN + V_QUARTER;
+    end if;
+    if (down = '0') then
+      square_y <= VDATA_BEGIN + V_HALF + V_QUARTER;
+    end if;
+    if (left = '0') then
+      square_x <= HDATA_BEGIN + H_QUARTER;
+    end if;
+    if (right = '0') then
+      square_x <= HDATA_BEGIN + H_HALF + H_QUARTER;
     end if;
   end process;
 end architecture;
