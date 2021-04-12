@@ -1,4 +1,5 @@
 -- Basic VGA Controller for the RZ EasyFPGA A2.2 board
+-- Ported from Verilog using the example provided by the manufacturer.
 -- Author: Francisco Miamoto
 
 library ieee;
@@ -7,10 +8,10 @@ use ieee.numeric_std.all;
 
 entity VgaController is
   port (
-    clk      : in std_logic;                      -- Pin 23, the clock provided by the board is 50Mhz
-    rgb      : out std_logic_vector (2 downto 0); -- Pins 106,105 and 104
-    hsync    : out std_logic;                     -- Pin 101
-    vsync    : out std_logic                      -- Pin 103
+    clk   : in std_logic; -- Pin 23, the clock provided by the board is 50Mhz
+    rgb   : out std_logic_vector (2 downto 0); -- Pins 106,105 and 104
+    hsync : out std_logic; -- Pin 101
+    vsync : out std_logic -- Pin 103
   );
 end VgaController;
 
@@ -47,9 +48,9 @@ begin
   is_data_active <= (hcount >= HDAT_BEGIN) and (hcount < HDAT_END) and (vcount >= VDAT_BEGIN) and (vcount < VDAT_END);
 
   -- Outputs
-  hsync    <= '1' when hcount > HSYNC_END else '0';
-  vsync    <= '1' when vcount > VSYNC_END else '0';
-  rgb      <= data when is_data_active else (others => '0');
+  hsync <= '1' when hcount > HSYNC_END else '0';
+  vsync <= '1' when vcount > VSYNC_END else '0';
+  rgb   <= data when is_data_active else (others => '0');
 
   -- We need 25MHz for the VGA so we divide the input clock by 2
   process (clk)
