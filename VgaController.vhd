@@ -5,6 +5,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.vga_utils.all;
 
 entity VgaController is
   port (
@@ -45,8 +46,8 @@ architecture rtl of VgaController is
   constant V_QUARTER : integer := 480 / 4;
 
   -- Signals
-  signal hcount : integer := 0;
-  signal vcount : integer := 0;
+  signal hcount : integer range 0 to HLINE_END := 0;
+  signal vcount : integer range 0 to VLINE_END := 0;
   signal data   : std_logic_vector (2 downto 0);
 
   signal vga_clk : std_logic := '0';
@@ -54,7 +55,19 @@ architecture rtl of VgaController is
   signal should_reset_vcount : boolean;
   signal should_reset_hcount : boolean;
   signal should_output_data  : boolean;
+
+  signal square_x           : integer range 0 to HLINE_END := 0;
+  signal square_y           : integer range 0 to VLINE_END := 0;
+  signal square_size        : integer                      := 50;
+  signal should_draw_square : boolean;
+
 begin
+  -- Middle of the screen;
+  square_x <= HDATA_BEGIN + H_HALF - square_size/2;
+  square_y <= VDATA_BEGIN + V_HALF - square_size/2;
+
+  square(hcount, vcount, square_x, square_y, square_size, should_draw_square);
+
   should_reset_vcount <= vcount = VLINE_END;
   should_reset_hcount <= hcount = HLINE_END;
   should_output_data  <= (hcount >= HDATA_BEGIN) and (hcount < HDATA_END) and (vcount >= VDATA_BEGIN) and (vcount < VDATA_END);
@@ -96,20 +109,8 @@ begin
   process (vga_clk)
   begin
     if (rising_edge(vga_clk)) then
-      if (hcount < HDATA_BEGIN + H_EIGHTH) then
-        data <= COLOR_WHITE;
-      elsif (hcount < HDATA_BEGIN + 2 * H_EIGHTH) then
-        data <= COLOR_YELLOW;
-      elsif (hcount < HDATA_BEGIN + 3 * H_EIGHTH) then
+      if (should_draw_square) then
         data <= COLOR_BLUE;
-      elsif (hcount < HDATA_BEGIN + 4 * H_EIGHTH) then
-        data <= COLOR_GREEN;
-      elsif (hcount < HDATA_BEGIN + 5 * H_EIGHTH) then
-        data <= COLOR_PURPLE;
-      elsif (hcount < HDATA_BEGIN + 6 * H_EIGHTH) then
-        data <= COLOR_RED;
-      elsif (hcount < HDATA_BEGIN + 7 * H_EIGHTH) then
-        data <= COLOR_WATER;
       else
         data <= COLOR_BLACK;
       end if;
