@@ -109,7 +109,7 @@ If everything goes well, it should begin displaying something!
 
 Yay!
 
-<img src="./docs/result.jpg" height="300"/>
+<img src="./docs/result.png" height="300"/>
 
 ## TODO
 - Add section about the Project Setup including the Pin Planner
