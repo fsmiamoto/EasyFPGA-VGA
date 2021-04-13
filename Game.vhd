@@ -17,6 +17,8 @@ entity Game is
 end entity Game;
 
 architecture rtl of Game is
+  constant SQUARE_SPEED : integer := 100000;
+
   -- VGA Clock - 25 MHz clock derived from the 50MHz built-in clock
   signal vga_clk : std_logic;
 
@@ -24,14 +26,18 @@ architecture rtl of Game is
   signal vga_hsync, vga_vsync  : std_logic;
   signal hpos, vpos            : integer;
 
-  signal square_size : integer := 50;
-  signal square_x    : integer := HDATA_BEGIN + H_HALF - square_size/2;
-  signal square_y    : integer := VDATA_BEGIN + V_HALF - square_size/2;
+  signal square_size  : integer                         := 50;
+  signal square_x     : integer range 0 to HDATA_END    := HDATA_BEGIN + H_HALF - square_size/2;
+  signal square_y     : integer range 0 to VDATA_END    := VDATA_BEGIN + V_HALF - square_size/2;
+  signal square_count : integer range 0 to SQUARE_SPEED := 0;
 
   signal up_debounced    : std_logic;
   signal down_debounced  : std_logic;
   signal left_debounced  : std_logic;
   signal right_debounced : std_logic;
+
+  signal move_square_en     : std_logic;
+  signal should_move_square : boolean;
 
   signal should_draw_square : boolean;
 
@@ -93,6 +99,9 @@ begin
   hsync <= vga_hsync;
   vsync <= vga_vsync;
 
+  move_square_en     <= up_debounced xor down_debounced xor left_debounced xor right_debounced;
+  should_move_square <= square_count = SQUARE_SPEED;
+
   Square(hpos, vpos, square_x, square_y, square_size, should_draw_square);
 
   -- We need 25MHz for the VGA so we divide the input clock by 2
@@ -112,18 +121,33 @@ begin
         rgb_input <= COLOR_BLACK;
       end if;
     end if;
+  end process;
 
-    if (up_debounced = '0') then
-      square_y <= VDATA_BEGIN + V_QUARTER;
-    end if;
-    if (down_debounced = '0') then
-      square_y <= VDATA_BEGIN + V_HALF + V_QUARTER;
-    end if;
-    if (left_debounced = '0') then
-      square_x <= HDATA_BEGIN + H_QUARTER;
-    end if;
-    if (right_debounced = '0') then
-      square_x <= HDATA_BEGIN + H_HALF + H_QUARTER;
+  process (vga_clk)
+  begin
+    if (rising_edge(vga_clk)) then
+      if (move_square_en = '1') then
+        if should_move_square then
+          square_count <= 0;
+        else
+          square_count <= square_count + 1;
+        end if;
+      else
+        square_count <= 0;
+      end if;
+
+      if (up_debounced = '0' and should_move_square) then
+        square_y <= square_y + 1;
+      end if;
+      if (down_debounced = '0' and should_move_square) then
+        square_y <= square_y - 1;
+      end if;
+      if (left_debounced = '0' and should_move_square) then
+        square_x <= square_x - 1;
+      end if;
+      if (right_debounced = '0' and should_move_square) then
+        square_x <= square_x + 1;
+      end if;
     end if;
   end process;
 
