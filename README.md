@@ -110,7 +110,7 @@ If everything goes well, it should begin displaying something!
 Yay!
 
 [<img src="./docs/videoPreview.png" width="450"/>](
-https://user-images.githubusercontent.com/20388082/114456652-7b004a80-9bb3-11eb-8057-2584dfc80393.mp4
+https://user-images.githubusercontent.com/20388082/114483153-42c23180-9bde-11eb-9235-87f2f160ca59.mp4
 )
 
 ## TODO
