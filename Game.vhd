@@ -1,7 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use work.vga_utils.all;
+use work.VgaUtils.all;
 
 entity Game is
   port (
@@ -17,26 +17,6 @@ entity Game is
 end entity Game;
 
 architecture rtl of Game is
-  constant COLOR_WHITE  : std_logic_vector := "111";
-  constant COLOR_YELLOW : std_logic_vector := "110";
-  constant COLOR_PURPLE : std_logic_vector := "101";
-  constant COLOR_RED    : std_logic_vector := "100";
-  constant COLOR_WATER  : std_logic_vector := "011";
-  constant COLOR_GREEN  : std_logic_vector := "010";
-  constant COLOR_BLUE   : std_logic_vector := "001";
-  constant COLOR_BLACK  : std_logic_vector := "000";
-
-  constant HDATA_BEGIN : integer := 143;
-  constant H_EIGHTH    : integer := 640 / 8;
-  constant H_HALF      : integer := 640 / 2;
-  constant H_QUARTER   : integer := 640 / 4;
-
-  constant VDATA_BEGIN : integer := 34;
-  constant VDATA_END   : integer := 514;
-  constant V_EIGHTH    : integer := 480 / 8;
-  constant V_HALF      : integer := 480 / 2;
-  constant V_QUARTER   : integer := 480 / 4;
-
   -- VGA Clock - 25 MHz clock derived from the 50MHz built-in clock
   signal vga_clk : std_logic;
 
@@ -47,6 +27,11 @@ architecture rtl of Game is
   signal square_size : integer := 50;
   signal square_x    : integer := HDATA_BEGIN + H_HALF - square_size/2;
   signal square_y    : integer := VDATA_BEGIN + V_HALF - square_size/2;
+
+  signal up_debounced    : std_logic;
+  signal down_debounced  : std_logic;
+  signal left_debounced  : std_logic;
+  signal right_debounced : std_logic;
 
   signal should_draw_square : boolean;
 
@@ -61,6 +46,14 @@ architecture rtl of Game is
       vpos    : out integer
     );
   end component;
+
+  component Debounce is
+    port (
+      i_Clk    : in std_logic;
+      i_Switch : in std_logic;
+      o_Switch : out std_logic
+    );
+  end component;
 begin
   controller : VgaController port map(
     clk     => vga_clk,
@@ -70,6 +63,30 @@ begin
     vsync   => vga_vsync,
     hpos    => hpos,
     vpos    => vpos
+  );
+
+  debounce_up_switch : Debounce port map(
+    i_Clk    => vga_clk,
+    i_Switch => up,
+    o_Switch => up_debounced
+  );
+
+  debounce_down_switch : Debounce port map(
+    i_Clk    => vga_clk,
+    i_Switch => down,
+    o_Switch => down_debounced
+  );
+
+  debounce_left_switch : Debounce port map(
+    i_Clk    => vga_clk,
+    i_Switch => left,
+    o_Switch => left_debounced
+  );
+
+  debounce_right_switch : Debounce port map(
+    i_Clk    => vga_clk,
+    i_Switch => right,
+    o_Switch => right_debounced
   );
 
   rgb   <= rgb_output;
@@ -90,23 +107,24 @@ begin
   begin
     if (rising_edge(vga_clk)) then
       if (should_draw_square) then
-        rgb_input <= COLOR_RED;
+        rgb_input <= COLOR_GREEN;
       else
-        rgb_input <= COLOR_WATER;
+        rgb_input <= COLOR_BLACK;
       end if;
     end if;
 
-    if (up = '0') then
+    if (up_debounced = '0') then
       square_y <= VDATA_BEGIN + V_QUARTER;
     end if;
-    if (down = '0') then
+    if (down_debounced = '0') then
       square_y <= VDATA_BEGIN + V_HALF + V_QUARTER;
     end if;
-    if (left = '0') then
+    if (left_debounced = '0') then
       square_x <= HDATA_BEGIN + H_QUARTER;
     end if;
-    if (right = '0') then
+    if (right_debounced = '0') then
       square_x <= HDATA_BEGIN + H_HALF + H_QUARTER;
     end if;
   end process;
+
 end architecture;

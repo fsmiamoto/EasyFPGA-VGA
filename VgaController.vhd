@@ -6,6 +6,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library work;
+use work.VgaUtils.all;
+
 entity VgaController is
   port (
     clk     : in std_logic;
@@ -19,17 +22,6 @@ entity VgaController is
 end VgaController;
 
 architecture rtl of VgaController is
-  -- Values for 640x480 resolution
-  constant HSYNC_END   : integer := 95;
-  constant HDATA_BEGIN : integer := 143;
-  constant HDATA_END   : integer := 783;
-  constant HLINE_END   : integer := 799;
-
-  constant VSYNC_END   : integer := 1;
-  constant VDATA_BEGIN : integer := 34;
-  constant VDATA_END   : integer := 514;
-  constant VLINE_END   : integer := 524;
-
   signal hcount : integer range 0 to HLINE_END := 0;
   signal vcount : integer range 0 to VLINE_END := 0;
 
