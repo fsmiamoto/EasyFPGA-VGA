@@ -1,10 +1,9 @@
 # EasyFPGA-VGA
 
-An example of VGA output using the RZ-EasyFPGA A2.2 board, usually found on AliExpress.
+A *Hello World* example of VGA output using the RZ-EasyFPGA A2.2 board.
 
-The output is at 640x480 @ 60Hz
 
-This guide is a *work in progress*.
+This guide is still a *Work In Progress*.
 
 ## The board
 Usually found on AliExpress for about US$ 40, the RZ-EasyFPGA board provides a *relatively* cheap way into the FPGA world.
@@ -17,24 +16,61 @@ In this guide, we'll be using the built-in VGA interface and by the end we shoul
 
 ## VGA
 
-For driving a VGA display, you only really need five signals:
+Let's start talking about the VGA standard.
+
+Although the connector has a lot of pins, for driving a display we only really need five signals:
 - HSync: Horizontal Synchronization
 - VSync: Vertical Synchronization
 - R: Red channel (analog)
 - G: Green channel (analog)
 - B: Blue channel (analog)
 
-Since we're working with *digital* signals we'll some some sort of DA conversion for the colors channels.
+The first thing to understand is how the information is transmitted to the display controller.
 
-On our board, we have a simple resistor attached to each channel allowing only 8 colors since each channel is either turned on completely or turned off.
+We won't go much in depth about the standard itself - you can take a look at some other 
+resources like this [one](https://forum.digikey.com/t/vga-controller-vhdl/12794) to understand it better -
+but besided the expected RGB signals, HSync and VSync play an important role.
+
+<img src="https://aws1.discourse-cdn.com/digikey/original/2X/4/43a91de5f1cc2ab380b22c4758b8b408da97e0c2.jpeg" width="500"/>
+
+[Source](https://forum.digikey.com/t/vga-controller-vhdl/12794)
+
+As shown in the image above, timings are crucial in order to drive a VGA
+display and for that we'll need do make sure to have the appropriate signal
+frequencies generated.
+
+For this guide, we'll output at 640x480 @ 60Hz so we'll use the timings/frequencies shown below:
+
+<img src="https://i.imgur.com/zbduxKi.png" width="500">
+
+[Source](https://forum.digikey.com/t/vga-controller-vhdl/12794)
+
+Since each of the color channel signals are analog ones, we're going to also need some sort of DA conversion and for that the board already provides three resistors - one 
+for each channel - ready to be used.
+
+The unfortunate news is that we only really have two leves for each color
+channel, either turned on or turned off.
+
+Some boards may include a resistive network allowing the use of more than one bit per channel but this is not our case :(
+
+In the end we should only have 8 colors (2^3) to work with but that should
+enough for our 
 
 <img width="300" src="./docs/vga.png"/>
+
+Source: Board documentation
+
 
 Each of those resistors is connected to the pins shown below
 
 <img width="300" src="./docs/vgaPins.png"/>
 
+Source: Board documentation
+
 We'll use these pin numbers later on.
+
+
+
 
 ## Initial setup
 First we need to make sure we have the appropriate environment for working with the board.
