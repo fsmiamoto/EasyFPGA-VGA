@@ -5,7 +5,7 @@ use work.VgaUtils.all;
 
 entity Game is
   port (
-    clk   : in std_logic; -- Pin 23
+    clk   : in std_logic; -- Pin 23, 50MHz from the onboard oscilator.
     rgb   : out std_logic_vector (2 downto 0); -- Pins 106, 105 and 104
     hsync : out std_logic; -- Pin 101
     vsync : out std_logic; -- Pin 103
@@ -26,10 +26,10 @@ architecture rtl of Game is
   signal vga_hsync, vga_vsync  : std_logic;
   signal hpos, vpos            : integer;
 
-  signal square_size  : integer                         := 50;
-  signal square_x     : integer range 0 to HDATA_END    := HDATA_BEGIN + H_HALF - square_size/2;
-  signal square_y     : integer range 0 to VDATA_END    := VDATA_BEGIN + V_HALF - square_size/2;
-  signal square_count : integer range 0 to SQUARE_SPEED := 0;
+  signal square_size  : integer                                := 50;
+  signal square_x     : integer range HDATA_BEGIN to HDATA_END := HDATA_BEGIN + H_HALF - square_size/2;
+  signal square_y     : integer range VDATA_BEGIN to VDATA_END := VDATA_BEGIN + V_HALF - square_size/2;
+  signal square_count : integer range 0 to SQUARE_SPEED        := 0;
 
   signal up_debounced    : std_logic;
   signal down_debounced  : std_logic;
@@ -136,19 +136,40 @@ begin
         square_count <= 0;
       end if;
 
-      if (up_debounced = '0' and should_move_square) then
-        square_y <= square_y + 1;
+      if (should_move_square) then
+        if (up_debounced = '0') then
+          if (square_y <= VDATA_BEGIN) then
+            square_y     <= VDATA_BEGIN;
+          else
+            square_y <= square_y - 1;
+          end if;
+        end if;
+
+        if (down_debounced = '0') then
+          if (square_y >= VDATA_END - square_size) then
+            square_y <= VDATA_END - square_size;
+          else
+            square_y <= square_y + 1;
+          end if;
+        end if;
+
+        if (left_debounced = '0') then
+          if (square_x <= HDATA_BEGIN) then
+            square_x     <= HDATA_BEGIN;
+          else
+            square_x <= square_x - 1;
+          end if;
+        end if;
+
+        if (right_debounced = '0') then
+          if (square_x >= HDATA_END - square_size) then
+            square_x <= HDATA_END - square_size;
+          else
+            square_x <= square_x + 1;
+          end if;
+        end if;
       end if;
-      if (down_debounced = '0' and should_move_square) then
-        square_y <= square_y - 1;
-      end if;
-      if (left_debounced = '0' and should_move_square) then
-        square_x <= square_x - 1;
-      end if;
-      if (right_debounced = '0' and should_move_square) then
-        square_x <= square_x + 1;
-      end if;
+
     end if;
   end process;
-
 end architecture;
