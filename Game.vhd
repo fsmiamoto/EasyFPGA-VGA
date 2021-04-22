@@ -17,7 +17,8 @@ entity Game is
 end entity Game;
 
 architecture rtl of Game is
-  constant SQUARE_SPEED : integer := 100000;
+  constant SQUARE_SIZE  : integer := 30; -- In pixels
+  constant SQUARE_SPEED : integer := 100_000;
 
   -- VGA Clock - 25 MHz clock derived from the 50MHz built-in clock
   signal vga_clk : std_logic;
@@ -26,10 +27,9 @@ architecture rtl of Game is
   signal vga_hsync, vga_vsync  : std_logic;
   signal hpos, vpos            : integer;
 
-  signal square_size  : integer                                := 50;
-  signal square_x     : integer range HDATA_BEGIN to HDATA_END := HDATA_BEGIN + H_HALF - square_size/2;
-  signal square_y     : integer range VDATA_BEGIN to VDATA_END := VDATA_BEGIN + V_HALF - square_size/2;
-  signal square_count : integer range 0 to SQUARE_SPEED        := 0;
+  signal square_x           : integer range HDATA_BEGIN to HDATA_END := HDATA_BEGIN + H_HALF - SQUARE_SIZE/2;
+  signal square_y           : integer range VDATA_BEGIN to VDATA_END := VDATA_BEGIN + V_HALF - SQUARE_SIZE/2;
+  signal square_speed_count : integer range 0 to SQUARE_SPEED        := 0;
 
   signal up_debounced    : std_logic;
   signal down_debounced  : std_logic;
@@ -100,9 +100,9 @@ begin
   vsync <= vga_vsync;
 
   move_square_en     <= up_debounced xor down_debounced xor left_debounced xor right_debounced;
-  should_move_square <= square_count = SQUARE_SPEED;
+  should_move_square <= square_speed_count = SQUARE_SPEED;
 
-  Square(hpos, vpos, square_x, square_y, square_size, should_draw_square);
+  Square(hpos, vpos, square_x, square_y, SQUARE_SIZE, should_draw_square);
 
   -- We need 25MHz for the VGA so we divide the input clock by 2
   process (clk)
@@ -128,12 +128,12 @@ begin
     if (rising_edge(vga_clk)) then
       if (move_square_en = '1') then
         if should_move_square then
-          square_count <= 0;
+          square_speed_count <= 0;
         else
-          square_count <= square_count + 1;
+          square_speed_count <= square_speed_count + 1;
         end if;
       else
-        square_count <= 0;
+        square_speed_count <= 0;
       end if;
 
       if (should_move_square) then
@@ -146,8 +146,8 @@ begin
         end if;
 
         if (down_debounced = '0') then
-          if (square_y >= VDATA_END - square_size) then
-            square_y <= VDATA_END - square_size;
+          if (square_y >= VDATA_END - SQUARE_SIZE) then
+            square_y <= VDATA_END - SQUARE_SIZE;
           else
             square_y <= square_y + 1;
           end if;
@@ -162,8 +162,8 @@ begin
         end if;
 
         if (right_debounced = '0') then
-          if (square_x >= HDATA_END - square_size) then
-            square_x <= HDATA_END - square_size;
+          if (square_x >= HDATA_END - SQUARE_SIZE) then
+            square_x <= HDATA_END - SQUARE_SIZE;
           else
             square_x <= square_x + 1;
           end if;
