@@ -29,7 +29,7 @@ The first thing to understand is how the information is transmitted to the displ
 
 We won't go much in depth about the standard itself - you can take a look at some other 
 resources like this [one](https://forum.digikey.com/t/vga-controller-vhdl/12794) to understand it better -
-but besided the expected RGB signals, HSync and VSync play an important role.
+but besides the expected RGB signals, HSync and VSync play an important role.
 
 <img src="https://aws1.discourse-cdn.com/digikey/original/2X/4/43a91de5f1cc2ab380b22c4758b8b408da97e0c2.jpeg" width="500"/>
 
@@ -51,15 +51,14 @@ for each channel - ready to be used.
 The unfortunate news is that we only really have two leves for each color
 channel, either turned on or turned off.
 
-Some boards may include a resistive network allowing the use of more than one bit per channel but this is not our case :(
+Some boards may include a resistive network, allowing the use of more than one bit per channel,
+but that's not our case unfortunately :(
 
-In the end we should only have 8 colors (2^3) to work with but that should
-enough for our 
+We'll only have 8 colors (2^3) to work with but that should enough for our purposes.
 
 <img width="300" src="./docs/vga.png"/>
 
 Source: Board documentation
-
 
 Each of those resistors is connected to the pins shown below
 
@@ -68,9 +67,6 @@ Each of those resistors is connected to the pins shown below
 Source: Board documentation
 
 We'll use these pin numbers later on.
-
-
-
 
 ## Initial setup
 First we need to make sure we have the appropriate environment for working with the board.
@@ -81,7 +77,7 @@ Make sure to install the Lite version since it supports the FPGA chip of our the
 
 <img width="200" src="./docs/blaster.png"/>
 
-For Windows, the instalation process should be straightforward but if you google for it there's plenty of resources.
+For Windows, the installation process should be straightforward but if you google for it there's plenty of resources.
 
 For GNU/Linux, I've attached some guides below that can help you:
 - Arch Linux: https://wiki.archlinux.org/index.php/Altera_Design_Software
@@ -103,7 +99,8 @@ $ quartus EasyFPGA-VGA.qpf
 
 2. Compile the project
 
-Now we need to build our project. For that you can click on the play icon on the toolbar or press *Ctrl+L*
+Now we need to build our project. For that you can click on the play icon on the toolbar or 
+press *Ctrl+L*
 
 ![Compile the  project](./docs/startCompilation.png)
 
@@ -124,9 +121,9 @@ If you don't see your Blaster there, this is probably a driver issue.
 
 4. Connect the board 
 
-First, power on your board by connecting the an USB cable to it. 
+First, power on your board by connecting the USB cable to it. 
 
-You can also use the power jack built-in into the board with a 5V power-supply.
+You can also use the power jack built into the board with a 5V power supply.
 
 With that, you can connected the block header cable to the board on the JTAG block.
 
