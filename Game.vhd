@@ -2,22 +2,25 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.VgaUtils.all;
+use work.PS2Utils.all;
 
 entity Game is
   port (
-    clk   : in std_logic; -- Pin 23, 50MHz from the onboard oscilator.
-    rgb   : out std_logic_vector (2 downto 0); -- Pins 106, 105 and 104
-    hsync : out std_logic; -- Pin 101
-    vsync : out std_logic; -- Pin 103
-    up    : in std_logic;
-    down  : in std_logic;
-    left  : in std_logic;
-    right : in std_logic
+    clk      : in std_logic; -- Pin 23, 50MHz from the onboard oscilator.
+    rgb      : out std_logic_vector (2 downto 0); -- Pins 106, 105 and 104
+    hsync    : out std_logic; -- Pin 101
+    vsync    : out std_logic; -- Pin 103
+    up       : in std_logic;
+    down     : in std_logic;
+    left     : in std_logic;
+    right    : in std_logic;
+    ps2_data : in std_logic;
+    ps2_clk  : in std_logic
   );
 end entity Game;
 
 architecture rtl of Game is
-  constant SQUARE_SIZE  : integer := 30; -- In pixels
+  constant SQUARE_SIZE  : integer := 40; -- In pixels
   constant SQUARE_SPEED : integer := 100_000;
 
   -- VGA Clock - 25 MHz clock derived from the 50MHz built-in clock
@@ -31,13 +34,13 @@ architecture rtl of Game is
   signal square_y           : integer range VDATA_BEGIN to VDATA_END := VDATA_BEGIN + V_HALF - SQUARE_SIZE/2;
   signal square_speed_count : integer range 0 to SQUARE_SPEED        := 0;
 
-  signal up_debounced    : std_logic;
-  signal down_debounced  : std_logic;
-  signal left_debounced  : std_logic;
-  signal right_debounced : std_logic;
-
   signal move_square_en     : std_logic;
   signal should_move_square : boolean;
+
+  signal should_move_up    : std_logic;
+  signal should_move_down  : std_logic;
+  signal should_move_left  : std_logic;
+  signal should_move_right : std_logic;
 
   signal should_draw_square : boolean;
 
@@ -53,15 +56,23 @@ architecture rtl of Game is
     );
   end component;
 
-  component Debounce is
+  component Controller is
     port (
-      i_Clk    : in std_logic;
-      i_Switch : in std_logic;
-      o_Switch : out std_logic
+      clk               : in std_logic;
+      ps2_data          : in std_logic;
+      ps2_clk           : in std_logic;
+      up                : in std_logic;
+      left              : in std_logic;
+      right             : in std_logic;
+      down              : in std_logic;
+      should_move_left  : out std_logic;
+      should_move_right : out std_logic;
+      should_move_down  : out std_logic;
+      should_move_up    : out std_logic
     );
   end component;
 begin
-  controller : VgaController port map(
+  vga : VgaController port map(
     clk     => vga_clk,
     rgb_in  => rgb_input,
     rgb_out => rgb_output,
@@ -71,35 +82,25 @@ begin
     vpos    => vpos
   );
 
-  debounce_up_switch : Debounce port map(
-    i_Clk    => vga_clk,
-    i_Switch => up,
-    o_Switch => up_debounced
-  );
-
-  debounce_down_switch : Debounce port map(
-    i_Clk    => vga_clk,
-    i_Switch => down,
-    o_Switch => down_debounced
-  );
-
-  debounce_left_switch : Debounce port map(
-    i_Clk    => vga_clk,
-    i_Switch => left,
-    o_Switch => left_debounced
-  );
-
-  debounce_right_switch : Debounce port map(
-    i_Clk    => vga_clk,
-    i_Switch => right,
-    o_Switch => right_debounced
+  c : Controller port map(
+    clk               => vga_clk,
+    ps2_data          => ps2_data,
+    ps2_clk           => ps2_clk,
+    up                => up,
+    left              => left,
+    right             => right,
+    down              => down,
+    should_move_down  => should_move_down,
+    should_move_up    => should_move_up,
+    should_move_left  => should_move_left,
+    should_move_right => should_move_right
   );
 
   rgb   <= rgb_output;
   hsync <= vga_hsync;
   vsync <= vga_vsync;
 
-  move_square_en     <= up_debounced xor down_debounced xor left_debounced xor right_debounced;
+  move_square_en     <= should_move_down xor should_move_left xor should_move_right xor should_move_up;
   should_move_square <= square_speed_count = SQUARE_SPEED;
 
   Square(hpos, vpos, square_x, square_y, SQUARE_SIZE, should_draw_square);
@@ -137,7 +138,7 @@ begin
       end if;
 
       if (should_move_square) then
-        if (up_debounced = '0') then
+        if (should_move_up = '1') then
           if (square_y <= VDATA_BEGIN) then
             square_y     <= VDATA_BEGIN;
           else
@@ -145,7 +146,7 @@ begin
           end if;
         end if;
 
-        if (down_debounced = '0') then
+        if (should_move_down = '1') then
           if (square_y >= VDATA_END - SQUARE_SIZE) then
             square_y <= VDATA_END - SQUARE_SIZE;
           else
@@ -153,7 +154,7 @@ begin
           end if;
         end if;
 
-        if (left_debounced = '0') then
+        if (should_move_left = '1') then
           if (square_x <= HDATA_BEGIN) then
             square_x     <= HDATA_BEGIN;
           else
@@ -161,7 +162,7 @@ begin
           end if;
         end if;
 
-        if (right_debounced = '0') then
+        if (should_move_right = '1') then
           if (square_x >= HDATA_END - SQUARE_SIZE) then
             square_x <= HDATA_END - SQUARE_SIZE;
           else
