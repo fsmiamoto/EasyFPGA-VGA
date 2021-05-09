@@ -41,6 +41,9 @@ architecture rtl of Game is
   signal should_move_down  : std_logic;
   signal should_move_left  : std_logic;
   signal should_move_right : std_logic;
+  signal should_reset      : std_logic;
+
+  signal is_dead : boolean := false;
 
   signal should_draw_square : boolean;
 
@@ -68,7 +71,8 @@ architecture rtl of Game is
       should_move_left  : out std_logic;
       should_move_right : out std_logic;
       should_move_down  : out std_logic;
-      should_move_up    : out std_logic
+      should_move_up    : out std_logic;
+      should_reset      : out std_logic
     );
   end component;
 begin
@@ -93,7 +97,8 @@ begin
     should_move_down  => should_move_down,
     should_move_up    => should_move_up,
     should_move_left  => should_move_left,
-    should_move_right => should_move_right
+    should_move_right => should_move_right,
+    should_reset      => should_reset
   );
 
   rgb   <= rgb_output;
@@ -116,7 +121,9 @@ begin
   process (vga_clk)
   begin
     if (rising_edge(vga_clk)) then
-      if (should_draw_square) then
+      if (is_dead) then
+        rgb_input <= COLOR_RED;
+      elsif (should_draw_square) then
         rgb_input <= COLOR_GREEN;
       else
         rgb_input <= COLOR_BLACK;
@@ -124,7 +131,7 @@ begin
     end if;
   end process;
 
-  process (vga_clk)
+  process (vga_clk, should_reset)
   begin
     if (rising_edge(vga_clk)) then
       if (move_square_en = '1') then
@@ -137,10 +144,14 @@ begin
         square_speed_count <= 0;
       end if;
 
-      if (should_move_square) then
+      if (should_reset = '1') then
+        square_x <= HDATA_BEGIN + H_HALF - SQUARE_SIZE/2;
+        square_y <= VDATA_BEGIN + V_HALF - SQUARE_SIZE/2;
+        is_dead  <= false;
+      elsif (should_move_square) then
         if (should_move_up = '1') then
           if (square_y <= VDATA_BEGIN) then
-            square_y     <= VDATA_BEGIN;
+            is_dead      <= true;
           else
             square_y <= square_y - 1;
           end if;
@@ -148,7 +159,7 @@ begin
 
         if (should_move_down = '1') then
           if (square_y >= VDATA_END - SQUARE_SIZE) then
-            square_y <= VDATA_END - SQUARE_SIZE;
+            is_dead <= true;
           else
             square_y <= square_y + 1;
           end if;
@@ -156,7 +167,7 @@ begin
 
         if (should_move_left = '1') then
           if (square_x <= HDATA_BEGIN) then
-            square_x     <= HDATA_BEGIN;
+            is_dead      <= true;
           else
             square_x <= square_x - 1;
           end if;
@@ -164,7 +175,7 @@ begin
 
         if (should_move_right = '1') then
           if (square_x >= HDATA_END - SQUARE_SIZE) then
-            square_x <= HDATA_END - SQUARE_SIZE;
+            is_dead <= true;
           else
             square_x <= square_x + 1;
           end if;
