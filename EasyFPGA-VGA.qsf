@@ -88,6 +88,7 @@ set_location_assignment PIN_120 -to ps2_data
 set_global_assignment -name VHDL_FILE Controller.vhd
 set_global_assignment -name VHDL_FILE PS2Utils.vhd
 set_global_assignment -name VHDL_FILE PS2Keyboard.vhd
+set_global_assignment -name VHDL_FILE RandInt.vhd
 set_global_assignment -name VHDL_FILE VgaUtils.vhd
 set_global_assignment -name VHDL_FILE Debounce.vhd
 set_global_assignment -name VHDL_FILE Game.vhd

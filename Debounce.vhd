@@ -16,7 +16,11 @@ entity Debounce is
   );
 end entity Debounce;
 
-architecture RTL of Debounce is
+architecture rtl of Debounce is
+
+  -- Set for 250,000 clock ticks of 25 MHz clock (10 ms)
+  constant c_DEBOUNCE_LIMIT : integer := 250000;
+
   signal r_Count : integer range 0 to c_DEBOUNCE_LIMIT := 0;
   signal r_State : std_logic                           := '0';
 
@@ -47,4 +51,4 @@ begin
   -- Assign internal register to output (debounced!)
   o_Switch <= r_State;
 
-end architecture RTL;
+end architecture rtl;
