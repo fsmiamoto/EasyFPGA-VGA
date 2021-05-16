@@ -31,6 +31,8 @@ package VgaUtils is
   constant V_HALF : integer := 480 / 2;
   constant V_QUARTER : integer := 480 / 4;
 
+  constant MAX_SNAKE_SIZE : integer := 31;
+
   procedure Square (
     signal hcur, vcur : in integer;
     signal hpos, vpos : in integer;
@@ -50,4 +52,20 @@ package body VgaUtils is
   begin
     should_draw <= hcur > hpos and hcur < (hpos + size) and vcur > vpos and vcur < (vpos + size);
   end Square;
+
+  procedure Snake (
+    signal hcur, vcur : in integer;
+    signal snake_size : in integer;
+    signal hpos, vpos : in type array(MAX_SNAKE_SIZE downto 0) of integer;
+    signal snake_size : in integer;
+    constant block_size : in integer;
+    signal should_draw : out boolean
+  ) is
+  begin
+    signal counter := integer = 1;
+    for counter in 1 to snake_size loop
+      snakeBody = ((hcur > hpos[counter] and hcur < hpos[counter] + block_size) and (vcur > vpos[counter] and vcur < vpos[counter] + block_size));
+    end loop;
+  end Snake;
+
 end VgaUtils;
