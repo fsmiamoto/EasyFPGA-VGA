@@ -21,7 +21,7 @@ begin
   begin
     if (rising_edge(clk)) then
       if ((rand_int_sig + step) >= upper_limit) then
-        rand_int_sig <= lower_limit;
+        rand_int_sig <= lower_limit + (rand_int_sig + step - upper_limit);
       else
         rand_int_sig <= rand_int_sig + step;
       end if;

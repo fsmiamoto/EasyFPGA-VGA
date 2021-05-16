@@ -31,12 +31,12 @@ architecture rtl of Game is
   signal vga_hsync, vga_vsync : std_logic;
   signal hpos, vpos : integer;
   signal trigger_random_apple_pos : std_logic := '1'; -- Initial trigger to generate a random apple position
-  
-  signal upper_limit_x : integer := HDATA_END - APPLE_SIZE;
-  signal lower_limit_x : integer := HDATA_BEGIN;
-  
-  signal upper_limit_y : integer := HDATA_END - APPLE_SIZE;
-  signal lower_limit_y : integer := HDATA_BEGIN;
+
+  constant upper_limit_x : integer := HDATA_END - APPLE_SIZE;
+  constant lower_limit_x : integer := HDATA_BEGIN;
+
+  constant upper_limit_y : integer := VDATA_END - APPLE_SIZE;
+  constant lower_limit_y : integer := VDATA_BEGIN;
 
   -- These three signals are used for the apple random position generation
   signal seed_x : integer := 1; -- random horizontal seed
@@ -48,8 +48,8 @@ architecture rtl of Game is
   -- while the horizontal one will follow the VGA clock, leading to a greater randomness feeling
   signal clk_x : std_logic;
 
-  signal square_x : integer range HDATA_BEGIN to HDATA_END := HDATA_BEGIN + H_HALF - SQUARE_SIZE/2;
-  signal square_y : integer range VDATA_BEGIN to VDATA_END := VDATA_BEGIN + V_HALF - SQUARE_SIZE/2;
+  signal snake_head_x : integer range HDATA_BEGIN to HDATA_END := HDATA_BEGIN + H_HALF - SQUARE_SIZE/2;
+  signal snake_head_y : integer range VDATA_BEGIN to VDATA_END := VDATA_BEGIN + V_HALF - SQUARE_SIZE/2;
   signal square_speed_count : integer range 0 to SQUARE_SPEED := 0;
 
   signal apple_x : integer range HDATA_BEGIN to HDATA_END := HDATA_BEGIN + H_QUARTER;
@@ -57,6 +57,8 @@ architecture rtl of Game is
 
   signal random_x : integer;
   signal random_y : integer;
+
+  signal snake_size : integer := 1;
 
   signal up_debounced : std_logic;
   signal down_debounced : std_logic;
@@ -74,9 +76,10 @@ architecture rtl of Game is
 
   signal is_dead : boolean := false;
 
+  signal should_draw_snake : boolean;
   signal should_draw_square : boolean;
   signal should_draw_apple : boolean;
-  
+
   signal snake_size : integer := 1;
 
   component VgaController is
@@ -111,7 +114,7 @@ architecture rtl of Game is
   component RandInt is
     port (
       clk : in std_logic;
-		seed : in integer;
+      seed : in integer;
       upper_limit : in integer;
       lower_limit : in integer;
       rand_int : out integer
@@ -125,6 +128,17 @@ architecture rtl of Game is
     port (
       clk_in : in std_logic;
       clk_out : out std_logic
+    );
+  end component;
+
+  component Snake is
+    port (
+      clk : in std_logic;
+      hcur, vcur : in integer;
+      hpos, vpos : inout INT_ARRAY (MAX_SNAKE_SIZE to 0);
+      snake_size : in integer;
+      block_size : in integer;
+      should_draw : out boolean
     );
   end component;
 
@@ -165,7 +179,7 @@ begin
 
   rand_x : RandInt port map(
     clk => clk_x,
-	 seed => seed_x,
+    seed => seed_x,
     upper_limit => upper_limit_x,
     lower_limit => lower_limit_x,
     rand_int => random_x
@@ -173,10 +187,21 @@ begin
 
   rand_y : RandInt port map(
     clk => vga_clk,
-	 seed => seed_y,
+    seed => seed_y,
     upper_limit => upper_limit_y,
     lower_limit => lower_limit_y,
     rand_int => random_y
+  );
+
+  snake : Snake port map(
+    clk => vga_clk,
+    hcur = >,
+    vcur = >,
+    hpos => hpos,
+    vpos => vpos,
+    snake_size => snake_size,
+    block_size => SQUARE_SIZE,
+    should_draw => should_draw_snake
   );
 
   rgb <= rgb_output;
@@ -186,7 +211,7 @@ begin
   move_square_en <= should_move_down xor should_move_left xor should_move_right xor should_move_up;
   should_move_square <= square_speed_count = SQUARE_SPEED;
 
-  Square(hpos, vpos, square_x, square_y, SQUARE_SIZE, should_draw_square);
+  Square(hpos, vpos, snake_head_x, snake_head_y, SQUARE_SIZE, should_draw_square);
   Square(hpos, vpos, apple_x, apple_y, APPLE_SIZE, should_draw_apple);
 
   -- We need 25MHz for the VGA so we divide the input clock by 2
@@ -240,52 +265,52 @@ begin
           counter_game_start <= 1;
         end if;
         seed_x <= upper_limit_x - (max_integer_value - counter_game_start)/(max_integer_value - 1) * (upper_limit_x - lower_limit_x);
-		  seed_y <= upper_limit_y - (max_integer_value - counter_game_start)/(max_integer_value - 1) * (upper_limit_y - lower_limit_y);
+        seed_y <= upper_limit_y - (max_integer_value - counter_game_start)/(max_integer_value - 1) * (upper_limit_y - lower_limit_y);
         square_speed_count <= 0;
       end if;
 
       if (should_reset = '1') then
-        square_x <= HDATA_BEGIN + H_HALF - SQUARE_SIZE/2;
-        square_y <= VDATA_BEGIN + V_HALF - SQUARE_SIZE/2;
+        snake_head_x <= HDATA_BEGIN + H_HALF - SQUARE_SIZE/2;
+        snake_head_y <= VDATA_BEGIN + V_HALF - SQUARE_SIZE/2;
         is_dead <= false;
       elsif (should_move_square) then
         if (should_move_up = '1') then
-          if (square_y <= VDATA_BEGIN) then
+          if (snake_head_y <= VDATA_BEGIN) then
             is_dead <= true;
           else
-            square_y <= square_y - 1;
+            snake_head_y <= snake_head_y - 1;
           end if;
         end if;
 
         if (should_move_down = '1') then
-          if (square_y >= VDATA_END - SQUARE_SIZE) then
+          if (snake_head_y >= VDATA_END - SQUARE_SIZE) then
             is_dead <= true;
           else
-            square_y <= square_y + 1;
+            snake_head_y <= snake_head_y + 1;
           end if;
         end if;
 
         if (should_move_left = '1') then
-          if (square_x <= HDATA_BEGIN) then
+          if (snake_head_x <= HDATA_BEGIN) then
             is_dead <= true;
           else
-            square_x <= square_x - 1;
+            snake_head_x <= snake_head_x - 1;
           end if;
         end if;
 
         if (should_move_right = '1') then
-          if (square_x >= HDATA_END - SQUARE_SIZE) then
+          if (snake_head_x >= HDATA_END - SQUARE_SIZE) then
             is_dead <= true;
           else
-            square_x <= square_x + 1;
+            snake_head_x <= snake_head_x + 1;
           end if;
         end if;
 
-        if (square_x = apple_x and square_y = apple_y) then
+        if (snake_head_x = apple_x and snake_head_y = apple_y) then
           trigger_random_apple_pos <= '1';
           snake_size <= snake_size + 1;
-            else
-            trigger_random_apple_pos <= '0';
+        else
+          trigger_random_apple_pos <= '0';
         end if;
       end if;
     end if;

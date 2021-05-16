@@ -3,6 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 package VgaUtils is
+  type INT_ARRAY is array (integer range <>) of integer;
   constant COLOR_WHITE : std_logic_vector := "111";
   constant COLOR_YELLOW : std_logic_vector := "110";
   constant COLOR_PURPLE : std_logic_vector := "101";
@@ -30,8 +31,6 @@ package VgaUtils is
   constant V_EIGHTH : integer := 480 / 8;
   constant V_HALF : integer := 480 / 2;
   constant V_QUARTER : integer := 480 / 4;
-
-  constant MAX_SNAKE_SIZE : integer := 31;
 
   procedure Square (
     signal hcur, vcur : in integer;
