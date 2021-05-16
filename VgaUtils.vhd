@@ -37,6 +37,7 @@ package VgaUtils is
     constant size      : in integer;
     signal should_draw : out boolean
   );
+
 end package;
 
 package body VgaUtils is
