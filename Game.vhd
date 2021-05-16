@@ -30,14 +30,19 @@ architecture rtl of Game is
   signal rgb_input, rgb_output : std_logic_vector(2 downto 0);
   signal vga_hsync, vga_vsync : std_logic;
   signal hpos, vpos : integer;
-  signal apple_x : integer;
-  signal apple_y : integer;
   signal trigger_random_apple_pos : std_logic := '1'; -- Initial trigger to generate a random apple position
+  
+  signal upper_limit_x : integer := HDATA_END - APPLE_SIZE;
+  signal lower_limit_x : integer := HDATA_BEGIN;
+  
+  signal upper_limit_y : integer := HDATA_END - APPLE_SIZE;
+  signal lower_limit_y : integer := HDATA_BEGIN;
 
   -- These three signals are used for the apple random position generation
-  signal seed : integer := 1; -- random seed
+  signal seed_x : integer := 1; -- random horizontal seed
+  signal seed_y : integer := 1; -- random vertical seed
   signal counter_game_start : integer := 1; -- measures the number of clock cycles until the game begins
-  signal max_integer : integer := 2147483647; -- 2^31 - 1
+  signal max_integer_value : integer := 2147483647; -- 2^31 - 1
 
   -- The horizontal random sequence generation will be done in a different pace
   -- while the horizontal one will follow the VGA clock, leading to a greater randomness feeling
@@ -71,6 +76,8 @@ architecture rtl of Game is
 
   signal should_draw_square : boolean;
   signal should_draw_apple : boolean;
+  
+  signal snake_size : integer := 1;
 
   component VgaController is
     port (
@@ -104,6 +111,7 @@ architecture rtl of Game is
   component RandInt is
     port (
       clk : in std_logic;
+		seed : in integer;
       upper_limit : in integer;
       lower_limit : in integer;
       rand_int : out integer
@@ -157,43 +165,18 @@ begin
 
   rand_x : RandInt port map(
     clk => clk_x,
-    upper_limit => HDATA_END - APPLE_SIZE,
-    lower_limit => HDATA_BEGIN,
+	 seed => seed_x,
+    upper_limit => upper_limit_x,
+    lower_limit => lower_limit_x,
     rand_int => random_x
   );
 
   rand_y : RandInt port map(
     clk => vga_clk,
-    upper_limit => VDATA_END - APPLE_SIZE,
-    lower_limit => VDATA_BEGIN,
+	 seed => seed_y,
+    upper_limit => upper_limit_y,
+    lower_limit => lower_limit_y,
     rand_int => random_y
-  );
-
-  clk_divider_x : ClockDivider
-  generic map(
-    divide_by => 5
-  )
-  port map(
-    clk_in => vga_clk,
-    clk_out => clk_x
-  );
-
-  apple_rand_x : RandInt port map(
-    clk => clk_x,
-    trigger => trigger_random_apple_pos,
-    seed => seed,
-    upper_limit => HDATA_END,
-    lower_limit => HDATA_BEGIN,
-    rand_int => apple_x
-  );
-
-  apple_rand_y : RandInt port map(
-    clk => vga_clk,
-    trigger => trigger_random_apple_pos,
-    seed => seed,
-    upper_limit => VDATA_END,
-    lower_limit => VDATA_BEGIN,
-    rand_int => apple_y
   );
 
   rgb <= rgb_output;
@@ -205,8 +188,6 @@ begin
 
   Square(hpos, vpos, square_x, square_y, SQUARE_SIZE, should_draw_square);
   Square(hpos, vpos, apple_x, apple_y, APPLE_SIZE, should_draw_apple);
-
-  signal snake_size : integer := 1;
 
   -- We need 25MHz for the VGA so we divide the input clock by 2
   process (clk)
@@ -256,9 +237,10 @@ begin
       else
         counter_game_start <= counter_game_start + 1;
         if (counter_game_start = max_integer_value) then
-          counter_game_start = 1;
+          counter_game_start <= 1;
         end if;
-        seed <= upper_limit - (max_integer_value - counter_game_start)/(max_integer_value - 1) * (upper_limit - lower_limit);
+        seed_x <= upper_limit_x - (max_integer_value - counter_game_start)/(max_integer_value - 1) * (upper_limit_x - lower_limit_x);
+		  seed_y <= upper_limit_y - (max_integer_value - counter_game_start)/(max_integer_value - 1) * (upper_limit_y - lower_limit_y);
         square_speed_count <= 0;
       end if;
 
@@ -301,7 +283,7 @@ begin
 
         if (square_x = apple_x and square_y = apple_y) then
           trigger_random_apple_pos <= '1';
-          snake_size <= snake_size + 1
+          snake_size <= snake_size + 1;
             else
             trigger_random_apple_pos <= '0';
         end if;
