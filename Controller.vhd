@@ -85,9 +85,9 @@ begin
 
   -- TODO: Review this
   -- Use WASD, HJKL or board buttons
-  should_move_up    <= '1' when ps2_code = Key_W or ps2_code = Key_K or up_debounced = '0' else '0';
-  should_move_left  <= '1' when ps2_code = Key_A or ps2_code = Key_H or left_debounced = '0' else '0';
-  should_move_down  <= '1' when ps2_code = Key_S or ps2_code = Key_J or down_debounced = '0' else '0';
-  should_move_right <= '1' when ps2_code = Key_D or ps2_code = Key_L or right_debounced = '0' else '0';
+  should_move_up    <= '1' when ps2_code = Key_W or ps2_code = Key_K else '0';
+  should_move_left  <= '1' when ps2_code = Key_A or ps2_code = Key_H else '0';
+  should_move_down  <= '1' when ps2_code = Key_S or ps2_code = Key_J else '0';
+  should_move_right <= '1' when ps2_code = Key_D or ps2_code = Key_L else '0';
   should_reset      <= '1' when right_debounced = '0' else '0';
 end architecture;
