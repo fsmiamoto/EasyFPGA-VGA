@@ -20,9 +20,9 @@ entity Game is
 end entity Game;
 
 architecture rtl of Game is
-  constant SQUARE_SIZE  : integer := 20; -- In pixels
-  constant SQUARE_SPEED : integer := 100_000;
-  constant APPLE_SIZE   : integer := 20;
+  constant SQUARE_SIZE          : integer := 20; -- In pixels
+  constant SQUARE_SPEED_DIVIDER : integer := 100_000;
+  constant APPLE_SIZE           : integer := 20;
 
   -- VGA Clock - 25 MHz clock derived from the 50MHz built-in clock
   signal vga_clk : std_logic;
@@ -35,9 +35,9 @@ architecture rtl of Game is
   -- while the horizontal one will follow the VGA clock, leading to a greater randomness feeling
   signal clk_x : std_logic;
 
-  signal square_x           : integer range HDATA_BEGIN to HDATA_END := HDATA_BEGIN + H_HALF - SQUARE_SIZE/2;
-  signal square_y           : integer range VDATA_BEGIN to VDATA_END := VDATA_BEGIN + V_HALF - SQUARE_SIZE/2;
-  signal square_speed_count : integer range 0 to SQUARE_SPEED        := 0;
+  signal square_x           : integer range HDATA_BEGIN to HDATA_END  := HDATA_BEGIN + H_HALF - SQUARE_SIZE/2;
+  signal square_y           : integer range VDATA_BEGIN to VDATA_END  := VDATA_BEGIN + V_HALF - SQUARE_SIZE/2;
+  signal square_speed_count : integer range 0 to SQUARE_SPEED_DIVIDER := 0;
 
   signal apple_x : integer range HDATA_BEGIN to HDATA_END := HDATA_BEGIN + H_QUARTER;
   signal apple_y : integer range VDATA_BEGIN to VDATA_END := VDATA_BEGIN + V_QUARTER;
@@ -165,8 +165,8 @@ begin
   hsync <= vga_hsync;
   vsync <= vga_vsync;
 
+  should_move_square <= square_speed_count = SQUARE_SPEED_DIVIDER;
   move_square_en     <= should_move_down xor should_move_left xor should_move_right xor should_move_up;
-  should_move_square <= square_speed_count = SQUARE_SPEED;
 
   Square(hpos, vpos, square_x, square_y, SQUARE_SIZE, should_draw_square);
   Square(hpos, vpos, apple_x, apple_y, APPLE_SIZE, should_draw_apple);
@@ -207,7 +207,18 @@ begin
     end if;
   end process;
 
-  process (vga_clk, should_reset)
+  process (vga_clk, square_y, square_x)
+  begin
+    if (rising_edge(clk)) then
+      if (square_y <= VDATA_BEGIN or square_y >= VDATA_END - SQUARE_SIZE or square_x <= HDATA_BEGIN or square_x >= HDATA_END - SQUARE_SIZE) then
+        is_dead <= true;
+      else
+        is_dead <= false;
+      end if;
+    end if;
+  end process;
+
+  process (vga_clk)
   begin
     if (rising_edge(vga_clk)) then
       if (move_square_en = '1') then
@@ -219,42 +230,30 @@ begin
       else
         square_speed_count <= 0;
       end if;
+    end if;
+  end process;
 
+  process (vga_clk, should_reset)
+  begin
+    if (rising_edge(clk)) then
       if (should_reset = '1') then
         square_x <= HDATA_BEGIN + H_HALF - SQUARE_SIZE/2;
         square_y <= VDATA_BEGIN + V_HALF - SQUARE_SIZE/2;
-        is_dead  <= false;
       elsif (should_move_square) then
         if (should_move_up = '1') then
-          if (square_y <= VDATA_BEGIN) then
-            is_dead      <= true;
-          else
-            square_y <= square_y - 1;
-          end if;
+          square_y <= square_y - 1;
         end if;
 
         if (should_move_down = '1') then
-          if (square_y >= VDATA_END - SQUARE_SIZE) then
-            is_dead <= true;
-          else
-            square_y <= square_y + 1;
-          end if;
+          square_y <= square_y + 1;
         end if;
 
         if (should_move_left = '1') then
-          if (square_x <= HDATA_BEGIN) then
-            is_dead      <= true;
-          else
-            square_x <= square_x - 1;
-          end if;
+          square_x <= square_x - 1;
         end if;
 
         if (should_move_right = '1') then
-          if (square_x >= HDATA_END - SQUARE_SIZE) then
-            is_dead <= true;
-          else
-            square_x <= square_x + 1;
-          end if;
+          square_x <= square_x + 1;
         end if;
       end if;
     end if;
