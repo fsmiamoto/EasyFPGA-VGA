@@ -1,0 +1,48 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use ieee.math_real.all;
+
+package PS2Utils is
+  constant Key_A : std_logic_vector := x"1C";
+  constant Key_B : std_logic_vector := x"32";
+  constant Key_C : std_logic_vector := x"21";
+  constant Key_D : std_logic_vector := x"23";
+  constant Key_E : std_logic_vector := x"24";
+  constant Key_F : std_logic_vector := x"2B";
+  constant Key_G : std_logic_vector := x"34";
+  constant Key_H : std_logic_vector := x"33";
+  constant Key_I : std_logic_vector := x"43";
+  constant Key_J : std_logic_vector := x"3B";
+  constant Key_K : std_logic_vector := x"42";
+  constant Key_L : std_logic_vector := x"4B";
+  constant Key_M : std_logic_vector := x"3A";
+  constant Key_N : std_logic_vector := x"31";
+  constant Key_O : std_logic_vector := x"44";
+  constant Key_P : std_logic_vector := x"4D";
+  constant Key_Q : std_logic_vector := x"15";
+  constant Key_R : std_logic_vector := x"2D";
+  constant Key_S : std_logic_vector := x"1B";
+  constant Key_T : std_logic_vector := x"2C";
+  constant Key_U : std_logic_vector := x"3C";
+  constant Key_V : std_logic_vector := x"2A";
+  constant Key_W : std_logic_vector := x"1D";
+  constant Key_X : std_logic_vector := x"22";
+  constant Key_Y : std_logic_vector := x"35";
+  constant Key_Z : std_logic_vector := x"1A";
+  constant Key_0 : std_logic_vector := x"45";
+  constant Key_1 : std_logic_vector := x"16";
+  constant Key_2 : std_logic_vector := x"1E";
+  constant Key_3 : std_logic_vector := x"26";
+  constant Key_4 : std_logic_vector := x"25";
+  constant Key_5 : std_logic_vector := x"2E";
+  constant Key_6 : std_logic_vector := x"36";
+  constant Key_7 : std_logic_vector := x"3D";
+  constant Key_8 : std_logic_vector := x"3E";
+  constant Key_9 : std_logic_vector := x"46";
+
+  constant DIRECTION_LEFT  : integer range 0 to 3 := 0;
+  constant DIRECTION_RIGHT : integer range 0 to 3 := 1;
+  constant DIRECTION_UP    : integer range 0 to 3 := 2;
+  constant DIRECTION_DOWN  : integer range 0 to 3 := 3;
+end package;

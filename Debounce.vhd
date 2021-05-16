@@ -1,15 +1,14 @@
 -------------------------------------------------------------------------------
--- File downloaded from http://www.nandland.com
--------------------------------------------------------------------------------
--- This module is used to debounce any switch or button coming into the FPGA.
--- Does not allow the output of the switch to change unless the switch is
--- steady long enough time.
--------------------------------------------------------------------------------
+-- Modified version of file downloaded from http://www.nandland.com
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity Debounce is
+  generic (
+    -- Set for 250,000 clock ticks of 25 MHz clock (10 ms)
+    c_DEBOUNCE_LIMIT : integer := 250_000
+  );
   port (
     i_Clk : in std_logic;
     i_Switch : in std_logic;
@@ -18,16 +17,12 @@ entity Debounce is
 end entity Debounce;
 
 architecture rtl of Debounce is
-
-  -- Set for 250,000 clock ticks of 25 MHz clock (10 ms)
-  constant c_DEBOUNCE_LIMIT : integer := 250000;
-
   signal r_Count : integer range 0 to c_DEBOUNCE_LIMIT := 0;
   signal r_State : std_logic := '0';
 
 begin
 
-  p_Debounce : process (i_Clk) is
+  process (i_Clk) is
   begin
     if rising_edge(i_Clk) then
 
@@ -47,7 +42,7 @@ begin
 
       end if;
     end if;
-  end process p_Debounce;
+  end process;
 
   -- Assign internal register to output (debounced!)
   o_Switch <= r_State;
