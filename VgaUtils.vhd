@@ -3,6 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 package VgaUtils is
+  type INT_ARRAY is array (integer range <>) of integer;
   constant COLOR_WHITE : std_logic_vector := "111";
   constant COLOR_YELLOW : std_logic_vector := "110";
   constant COLOR_PURPLE : std_logic_vector := "101";
