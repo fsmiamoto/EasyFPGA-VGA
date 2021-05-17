@@ -14,14 +14,14 @@ entity RandInt is
 end RandInt;
 
 architecture rtl of RandInt is
-  constant step : integer := seed;
-  signal rand_int_sig : integer := lower_limit;
+  constant step : integer := 19; -- 19 can be replaced by any number (preferrably prime)
+  signal rand_int_sig : integer := seed;
 begin
   process (clk)
   begin
     if (rising_edge(clk)) then
       if ((rand_int_sig + step) >= upper_limit) then
-        rand_int_sig <= lower_limit + (rand_int_sig + step - upper_limit);
+        rand_int_sig <= seed + (rand_int_sig + step - upper_limit);
       else
         rand_int_sig <= rand_int_sig + step;
       end if;
