@@ -5,16 +5,16 @@ use ieee.numeric_std.all;
 -- Generates a pseudo random integer
 entity RandInt is
   port (
-    clk : in std_logic;
-    seed : in integer;
+    clk         : in std_logic;
+    seed        : in integer;
     upper_limit : in integer;
     lower_limit : in integer;
-    rand_int : out integer
+    rand_int    : out integer
   );
 end RandInt;
 
 architecture rtl of RandInt is
-  constant step : integer := 19; -- 19 can be replaced by any number (preferrably prime)
+  constant step       : integer := 19; -- 19 can be replaced by any number (preferrably prime)
   signal rand_int_sig : integer := seed;
 begin
   process (clk)

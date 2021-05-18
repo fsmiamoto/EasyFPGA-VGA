@@ -10,7 +10,7 @@ entity Debounce is
     c_DEBOUNCE_LIMIT : integer := 250_000
   );
   port (
-    i_Clk : in std_logic;
+    i_Clk    : in std_logic;
     i_Switch : in std_logic;
     o_Switch : out std_logic
   );
@@ -18,7 +18,7 @@ end entity Debounce;
 
 architecture rtl of Debounce is
   signal r_Count : integer range 0 to c_DEBOUNCE_LIMIT := 0;
-  signal r_State : std_logic := '0';
+  signal r_State : std_logic                           := '0';
 
 begin
 
