@@ -183,11 +183,15 @@ begin
     end if;
   end process;
 
-  process (vga_clk, should_draw_square, should_draw_apple)
+  process (vga_clk, should_draw_square, should_draw_apple, should_reset)
   begin
     if (rising_edge(vga_clk)) then
-      -- Collision, update apple position
-      if (should_draw_square and should_draw_apple) then
+      if (should_reset = '1') then
+        -- Go back to initial position
+        apple_x <= HDATA_BEGIN + H_QUARTER;
+        apple_y <= VDATA_BEGIN + V_QUARTER;
+      elsif (should_draw_square and should_draw_apple) then
+        -- Collision, update apple position
         apple_y <= random_y;
         apple_x <= random_x;
       end if;
