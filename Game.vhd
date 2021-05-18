@@ -59,7 +59,7 @@ architecture rtl of Game is
   signal should_move_right : std_logic;
   signal should_reset      : std_logic;
 
-  signal is_dead : boolean := false;
+  signal is_dead : std_logic := '0';
 
   signal should_draw_square : boolean;
   signal should_draw_apple  : boolean;
@@ -166,7 +166,7 @@ begin
   vsync <= vga_vsync;
 
   should_move_square <= square_speed_count = SQUARE_SPEED_DIVIDER;
-  move_square_en     <= should_move_down xor should_move_left xor should_move_right xor should_move_up;
+  move_square_en     <= not is_dead and (should_move_down xor should_move_left xor should_move_right xor should_move_up);
 
   Square(hpos, vpos, square_x, square_y, SQUARE_SIZE, should_draw_square);
   Square(hpos, vpos, apple_x, apple_y, APPLE_SIZE, should_draw_apple);
@@ -193,7 +193,7 @@ begin
   process (vga_clk)
   begin
     if (rising_edge(vga_clk)) then
-      if (is_dead) then
+      if (is_dead = '1') then
         rgb_input <= COLOR_RED;
       elsif (should_draw_square and should_draw_apple) then
         rgb_input <= COLOR_GREEN;
@@ -211,9 +211,9 @@ begin
   begin
     if (rising_edge(clk)) then
       if (square_y <= VDATA_BEGIN or square_y >= VDATA_END - SQUARE_SIZE or square_x <= HDATA_BEGIN or square_x >= HDATA_END - SQUARE_SIZE) then
-        is_dead <= true;
+        is_dead <= '1';
       else
-        is_dead <= false;
+        is_dead <= '0';
       end if;
     end if;
   end process;
