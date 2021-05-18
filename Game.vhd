@@ -25,10 +25,9 @@ architecture rtl of Game is
   -- VGA Clock - 25 MHz clock derived from the 50MHz built-in clock
   signal vga_clk : std_logic;
 
-  signal rgb_input, rgb_output    : std_logic_vector(2 downto 0);
-  signal vga_hsync, vga_vsync     : std_logic;
-  signal hpos, vpos               : integer;
-  signal trigger_random_apple_pos : std_logic := '1'; -- Initial trigger to generate a random apple position
+  signal rgb_input, rgb_output : std_logic_vector(2 downto 0);
+  signal vga_hsync, vga_vsync  : std_logic;
+  signal hpos, vpos            : integer;
 
   -- These three signals are used for the apple random position generation
   signal seed_x             : integer; -- random horizontal seed
