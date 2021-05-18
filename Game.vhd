@@ -21,8 +21,12 @@ end entity Game;
 
 architecture rtl of Game is
   constant SQUARE_SIZE          : integer := 20; -- In pixels
-  constant SQUARE_SPEED_DIVIDER : integer := 100_000;
+  constant SQUARE_SPEED_DIVIDER : integer := 150_000;
   constant APPLE_SIZE           : integer := 20;
+
+  constant START_STATE   : integer := 0;
+  constant PLAYING_STATE : integer := 1;
+  constant DEAD_STATE    : integer := 2;
 
   -- VGA Clock - 25 MHz clock derived from the 50MHz built-in clock
   signal vga_clk : std_logic;
@@ -59,7 +63,7 @@ architecture rtl of Game is
   signal should_move_right : std_logic;
   signal should_reset      : std_logic;
 
-  signal is_dead : std_logic := '0';
+  signal state : integer range 0 to 2 := START_STATE;
 
   signal should_draw_square : boolean;
   signal should_draw_apple  : boolean;
@@ -166,7 +170,7 @@ begin
   vsync <= vga_vsync;
 
   should_move_square <= square_speed_count = SQUARE_SPEED_DIVIDER;
-  move_square_en     <= not is_dead and (should_move_down xor should_move_left xor should_move_right xor should_move_up);
+  move_square_en     <= (should_move_down xor should_move_left xor should_move_right xor should_move_up) when state /= DEAD_STATE else '0';
 
   Square(hpos, vpos, square_x, square_y, SQUARE_SIZE, should_draw_square);
   Square(hpos, vpos, apple_x, apple_y, APPLE_SIZE, should_draw_apple);
@@ -193,7 +197,7 @@ begin
   process (vga_clk)
   begin
     if (rising_edge(vga_clk)) then
-      if (is_dead = '1') then
+      if (state = DEAD_STATE) then
         rgb_input <= COLOR_RED;
       elsif (should_draw_square and should_draw_apple) then
         rgb_input <= COLOR_GREEN;
@@ -211,9 +215,9 @@ begin
   begin
     if (rising_edge(clk)) then
       if (square_y <= VDATA_BEGIN or square_y >= VDATA_END - SQUARE_SIZE or square_x <= HDATA_BEGIN or square_x >= HDATA_END - SQUARE_SIZE) then
-        is_dead <= '1';
+        state <= DEAD_STATE;
       else
-        is_dead <= '0';
+        state <= PLAYING_STATE;
       end if;
     end if;
   end process;
