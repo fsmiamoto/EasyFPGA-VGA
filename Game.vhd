@@ -21,8 +21,12 @@ end entity Game;
 
 architecture rtl of Game is
   constant SQUARE_SIZE          : integer := 20; -- In pixels
-  constant SQUARE_SPEED_DIVIDER : integer := 100_000;
+  constant SQUARE_SPEED_DIVIDER : integer := 150_000;
   constant APPLE_SIZE           : integer := 20;
+
+  constant START_STATE   : integer := 0;
+  constant PLAYING_STATE : integer := 1;
+  constant DEAD_STATE    : integer := 2;
 
   -- VGA Clock - 25 MHz clock derived from the 50MHz built-in clock
   signal vga_clk : std_logic;
@@ -50,8 +54,9 @@ architecture rtl of Game is
   signal left_debounced  : std_logic;
   signal right_debounced : std_logic;
 
-  signal move_square_en     : std_logic;
-  signal should_move_square : boolean;
+  signal is_square_out_of_bounds : boolean;
+  signal should_move_square      : boolean;
+  signal has_key_pressed         : std_logic;
 
   signal should_move_up    : std_logic;
   signal should_move_down  : std_logic;
@@ -59,7 +64,7 @@ architecture rtl of Game is
   signal should_move_right : std_logic;
   signal should_reset      : std_logic;
 
-  signal is_dead : boolean := false;
+  signal state : integer range 0 to 2 := START_STATE;
 
   signal should_draw_square : boolean;
   signal should_draw_apple  : boolean;
@@ -166,7 +171,8 @@ begin
   vsync <= vga_vsync;
 
   should_move_square <= square_speed_count = SQUARE_SPEED_DIVIDER;
-  move_square_en     <= should_move_down xor should_move_left xor should_move_right xor should_move_up;
+  has_key_pressed    <= should_move_down xor should_move_left xor should_move_right xor should_move_up;
+  is_square_out_of_bounds <= square_y <= VDATA_BEGIN or square_y >= VDATA_END - SQUARE_SIZE or square_x <= HDATA_BEGIN or square_x >= HDATA_END - SQUARE_SIZE;
 
   Square(hpos, vpos, square_x, square_y, SQUARE_SIZE, should_draw_square);
   Square(hpos, vpos, apple_x, apple_y, APPLE_SIZE, should_draw_apple);
@@ -179,61 +185,86 @@ begin
     end if;
   end process;
 
-  process (vga_clk, should_draw_square, should_draw_apple)
+  -- Apple position
+  process (vga_clk, should_draw_square, should_draw_apple, should_reset)
   begin
     if (rising_edge(vga_clk)) then
-      -- Collision, update apple position
-      if (should_draw_square and should_draw_apple) then
+      if (should_reset = '1') then
+        -- Go back to initial position
+        apple_x <= HDATA_BEGIN + H_QUARTER;
+        apple_y <= VDATA_BEGIN + V_QUARTER;
+      elsif (should_draw_square and should_draw_apple) then
+        -- Collision, update apple position
         apple_y <= random_y;
         apple_x <= random_x;
       end if;
     end if;
   end process;
 
+  -- VGA Colors
   process (vga_clk)
   begin
     if (rising_edge(vga_clk)) then
-      if (is_dead) then
+      if (state = DEAD_STATE) then
         rgb_input <= COLOR_RED;
-      elsif (should_draw_square and should_draw_apple) then
-        rgb_input <= COLOR_GREEN;
-      elsif (should_draw_square) then
-        rgb_input <= COLOR_GREEN;
-      elsif (should_draw_apple) then
-        rgb_input <= COLOR_RED;
-      else
-        rgb_input <= COLOR_BLACK;
+      elsif (state = START_STATE) then
+        rgb_input <= COLOR_BLUE;
+      elsif (state = PLAYING_STATE) then
+        if (should_draw_square and should_draw_apple) then
+          rgb_input <= COLOR_GREEN;
+        elsif (should_draw_square) then
+          rgb_input <= COLOR_GREEN;
+        elsif (should_draw_apple) then
+          rgb_input <= COLOR_RED;
+        else
+          rgb_input <= COLOR_BLACK;
+        end if;
       end if;
     end if;
   end process;
 
-  process (vga_clk, square_y, square_x)
+  -- State machine
+  process (vga_clk, is_square_out_of_bounds, has_key_pressed, should_reset)
   begin
     if (rising_edge(clk)) then
-      if (square_y <= VDATA_BEGIN or square_y >= VDATA_END - SQUARE_SIZE or square_x <= HDATA_BEGIN or square_x >= HDATA_END - SQUARE_SIZE) then
-        is_dead <= true;
-      else
-        is_dead <= false;
+      if (state = START_STATE) then
+        if (has_key_pressed = '1') then
+          state <= PLAYING_STATE;
+        end if;
+      elsif (state = PLAYING_STATE) then
+        if (is_square_out_of_bounds) then
+          state <= DEAD_STATE;
+        elsif (should_reset = '1') then
+          state <= START_STATE;
+        end if;
+      elsif (state = DEAD_STATE) then
+        if (should_reset = '1') then
+          state <= START_STATE;
+        end if;
       end if;
     end if;
   end process;
 
+  -- Square speed divider
   process (vga_clk)
   begin
     if (rising_edge(vga_clk)) then
-      if (move_square_en = '1') then
-        if (should_move_square) then
-          square_speed_count <= 0;
+      if (state = PLAYING_STATE) then
+        if (has_key_pressed = '1') then
+          if (should_move_square) then
+            square_speed_count <= 0;
+          else
+            square_speed_count <= square_speed_count + 1;
+          end if;
         else
-          square_speed_count <= square_speed_count + 1;
+          square_speed_count <= 0;
         end if;
-      else
-        square_speed_count <= 0;
       end if;
     end if;
   end process;
 
-  process (vga_clk, should_reset)
+  -- Square movement
+  process (vga_clk, should_reset, state)
   begin
     if (rising_edge(clk)) then
       if (should_reset = '1') then
