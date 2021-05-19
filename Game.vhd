@@ -154,14 +154,14 @@ begin
 
   rand_x : RandInt port map(
     clk         => clk_x,
-    upper_limit => HDATA_END - APPLE_SIZE,
+    upper_limit => 700, -- TODO: Investigate why a magic number is needed
     lower_limit => HDATA_BEGIN,
     rand_int    => random_x
   );
 
   rand_y : RandInt port map(
     clk         => vga_clk,
-    upper_limit => VDATA_END - APPLE_SIZE,
+    upper_limit => 400, -- TODO: Investigate why a magic number is needed
     lower_limit => VDATA_BEGIN,
     rand_int    => random_y
   );
@@ -188,13 +188,9 @@ begin
   -- Apple position
   process (vga_clk, should_draw_square, should_draw_apple, should_reset)
   begin
-    if (rising_edge(vga_clk)) then
-      if (should_reset = '1') then
-        -- Go back to initial position
-        apple_x <= HDATA_BEGIN + H_QUARTER;
-        apple_y <= VDATA_BEGIN + V_QUARTER;
-      elsif (should_draw_square and should_draw_apple) then
-        -- Collision, update apple position
+    if (falling_edge(vga_clk)) then
+      if (should_reset = '1' or (should_draw_square and should_draw_apple)) then
+        -- Resetting the game or collision between square and apple
         apple_y <= random_y;
         apple_x <= random_x;
       end if;
