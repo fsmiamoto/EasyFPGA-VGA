@@ -6,16 +6,18 @@ use work.PS2Utils.all;
 
 entity Game is
   port (
-    clk      : in std_logic; -- Pin 23, 50MHz from the onboard oscilator.
-    rgb      : out std_logic_vector (2 downto 0); -- Pins 106, 105 and 104
-    hsync    : out std_logic; -- Pin 101
-    vsync    : out std_logic; -- Pin 103
-    up       : in std_logic;
-    down     : in std_logic;
-    left     : in std_logic;
-    right    : in std_logic;
-    ps2_data : in std_logic;
-    ps2_clk  : in std_logic
+    clk             : in std_logic; -- Pin 23, 50MHz from the onboard oscilator.
+    rgb             : out std_logic_vector (2 downto 0); -- Pins 106, 105 and 104
+    hsync           : out std_logic; -- Pin 101
+    vsync           : out std_logic; -- Pin 103
+    up              : in std_logic;
+    down            : in std_logic;
+    left            : in std_logic;
+    right           : in std_logic;
+    ps2_data        : in std_logic;
+    ps2_clk         : in std_logic;
+    seven_seg_digit : out std_logic_vector(3 downto 0);
+    seven_seg_data  : out std_logic_vector(6 downto 0)
   );
 end entity Game;
 
@@ -23,15 +25,17 @@ architecture rtl of Game is
   constant SQUARE_SIZE : integer := 20; -- In pixels
   constant APPLE_SIZE  : integer := 20;
 
-  signal square_speed_divider : integer := 150_000;
+  signal square_speed_divider : integer := 125_000;
 
   constant START_STATE   : integer := 0;
   constant PLAYING_STATE : integer := 1;
   constant DEAD_STATE    : integer := 2;
 
-  signal score             : integer range 0 to 99 := 0;
-  signal score_seven_seg_0 : std_logic_vector(6 downto 0);
-  signal score_seven_seg_1 : std_logic_vector(6 downto 0);
+  signal score                : integer range 0 to 99 := 0;
+  signal score_seven_seg_0    : std_logic_vector(6 downto 0);
+  signal score_seven_seg_1    : std_logic_vector(6 downto 0);
+  signal score_active_display : integer range 0 to 1 := 0;
+  signal score_display_clk    : std_logic;
 
   -- VGA Clock - 25 MHz clock derived from the 50MHz built-in clock
   signal vga_clk : std_logic;
@@ -165,6 +169,15 @@ begin
     clk_out => clk_x
   );
 
+  display_clk_divider : ClockDivider
+  generic map(
+    divide_by => 25E2
+  )
+  port map(
+    clk_in  => vga_clk,
+    clk_out => score_display_clk
+  );
+
   rand_x : RandInt port map(
     clk         => clk_x,
     upper_limit => 700, -- TODO: Investigate why a magic number is needed
@@ -192,6 +205,18 @@ begin
   should_move_square <= square_speed_count = square_speed_divider;
   has_key_pressed    <= should_move_down xor should_move_left xor should_move_right xor should_move_up;
   is_square_out_of_bounds <= square_y <= VDATA_BEGIN or square_y >= VDATA_END - SQUARE_SIZE or square_x <= HDATA_BEGIN or square_x >= HDATA_END - SQUARE_SIZE;
+
+  seven_seg_digit <=
+    "1110" when score_active_display = 0 else
+    "1101" when score_active_display = 1 else
+    "1111";
+
+  seven_seg_data <=
+    score_seven_seg_0 when score_active_display = 0 else
+    score_seven_seg_1 when score_active_display = 1 else
+    (others => '1');
+
+  -- score_active_display <= 1;
 
   Square(hpos, vpos, square_x, square_y, SQUARE_SIZE, should_draw_square);
   Square(hpos, vpos, apple_x, apple_y, APPLE_SIZE, should_draw_apple);
@@ -246,7 +271,7 @@ begin
 
   state_machine : process (vga_clk, is_square_out_of_bounds, has_key_pressed, should_reset)
   begin
-    if (rising_edge(clk)) then
+    if (rising_edge(vga_clk)) then
       if (state = START_STATE) then
         if (has_key_pressed = '1') then
           state <= PLAYING_STATE;
@@ -284,7 +309,7 @@ begin
 
   square_movement : process (vga_clk, should_reset, state)
   begin
-    if (rising_edge(clk)) then
+    if (rising_edge(vga_clk)) then
       if (should_reset = '1') then
         square_x <= HDATA_BEGIN + H_HALF - SQUARE_SIZE/2;
         square_y <= VDATA_BEGIN + V_HALF - SQUARE_SIZE/2;
@@ -307,4 +332,11 @@ begin
       end if;
     end if;
   end process square_movement;
+
+  process (score_display_clk)
+  begin
+    if (rising_edge(score_display_clk)) then
+      score_active_display <= score_active_display + 1;
+    end if;
+  end process;
 end architecture;

@@ -13,21 +13,20 @@ entity ClockDivider is
 end entity;
 
 architecture rtl of ClockDivider is
-  signal count        : integer range 0 to divide_by := 0;
-  signal output       : std_logic                    := '0';
-  signal should_reset : boolean                      := false;
+  signal count  : integer range 0 to divide_by := 0;
+  signal output : std_logic                    := '0';
 begin
   process (clk_in)
   begin
-    if (should_reset) then
-      count  <= 0;
-      output <= not output;
-    else
-      count <= count + 1;
+    if (rising_edge(clk_in)) then
+      if (count = divide_by) then
+        output <= not output;
+        count  <= 0;
+      else
+        count <= count + 1;
+      end if;
     end if;
   end process;
 
-  clk_out      <= output;
-  should_reset <= count = divide_by;
-
+  clk_out <= output;
 end architecture;
