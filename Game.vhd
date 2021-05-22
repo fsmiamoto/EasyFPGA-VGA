@@ -20,9 +20,9 @@ entity Game is
 end entity Game;
 
 architecture rtl of Game is
-  constant SQUARE_SIZE          : integer := 20; -- In pixels
-  constant SQUARE_SPEED_DIVIDER : integer := 150_000;
-  constant APPLE_SIZE           : integer := 20;
+  constant SQUARE_SIZE        : integer := 20; -- In pixels
+  constant APPLE_SIZE         : integer := 20;
+  signal SQUARE_SPEED_DIVIDER : integer := 150_000;
 
   constant START_STATE   : integer := 0;
   constant PLAYING_STATE : integer := 1;
@@ -39,9 +39,9 @@ architecture rtl of Game is
   -- while the horizontal one will follow the VGA clock, leading to a greater randomness feeling
   signal clk_x : std_logic;
 
-  signal square_x           : integer range HDATA_BEGIN to HDATA_END  := HDATA_BEGIN + H_HALF - SQUARE_SIZE/2;
-  signal square_y           : integer range VDATA_BEGIN to VDATA_END  := VDATA_BEGIN + V_HALF - SQUARE_SIZE/2;
-  signal square_speed_count : integer range 0 to SQUARE_SPEED_DIVIDER := 0;
+  signal square_x           : integer range HDATA_BEGIN to HDATA_END := HDATA_BEGIN + H_HALF - SQUARE_SIZE/2;
+  signal square_y           : integer range VDATA_BEGIN to VDATA_END := VDATA_BEGIN + V_HALF - SQUARE_SIZE/2;
+  signal square_speed_count : integer                                := 0;
 
   signal apple_x : integer range HDATA_BEGIN to HDATA_END := HDATA_BEGIN + H_QUARTER;
   signal apple_y : integer range VDATA_BEGIN to VDATA_END := VDATA_BEGIN + V_QUARTER;
@@ -189,10 +189,16 @@ begin
   process (vga_clk, should_draw_square, should_draw_apple, should_reset)
   begin
     if (falling_edge(vga_clk)) then
-      if (should_reset = '1' or (should_draw_square and should_draw_apple)) then
+      if (should_reset = '1') then
         -- Resetting the game or collision between square and apple
-        apple_y <= random_y;
-        apple_x <= random_x;
+        apple_y              <= random_y;
+        apple_x              <= random_x;
+        SQUARE_SPEED_DIVIDER <= 150_000;
+      elsif (should_draw_square and should_draw_apple) then
+        -- Collision between square and apple
+        apple_y              <= random_y;
+        apple_x              <= random_x;
+        SQUARE_SPEED_DIVIDER <= SQUARE_SPEED_DIVIDER - 5000;
       end if;
     end if;
   end process;
