@@ -2,8 +2,6 @@
 
 A _Hello World_ example of VGA output using the RZ-EasyFPGA A2.2 board.
 
-This guide is still a _Work In Progress_.
-
 ## The board
 
 Usually found on AliExpress for about US$ 40, the RZ-EasyFPGA board provides a _relatively_ cheap way into the FPGA world.
@@ -155,7 +153,8 @@ Yay!
 
 ## Contributing
 
-If you see any mistake on have any questions feel free to open a PR or create an issue.
+If you see any errors or have any questions regarding the project, feel free to open a PR 
+or create an issue.
 
 ## Sources:
 
