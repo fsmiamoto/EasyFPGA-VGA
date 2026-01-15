@@ -1,6 +1,5 @@
 -- Basic VGA Controller for the RZ EasyFPGA A2.2 board
 -- Ported from Verilog using the example provided by the manufacturer.
--- Author: Francisco Miamoto
 
 library ieee;
 use ieee.std_logic_1164.all;
