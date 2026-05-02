@@ -30,7 +30,7 @@ We won't go much in depth about the standard itself - you can take a look at som
 resources like this [one](https://forum.digikey.com/t/vga-controller-vhdl/12794) to understand it better -
 but besides the expected RGB signals, HSync and VSync play an important role.
 
-<img src="https://aws1.discourse-cdn.com/digikey/original/2X/4/43a91de5f1cc2ab380b22c4758b8b408da97e0c2.jpeg" width="500"/>
+<img src="./docs/vga-sync-signals.jpeg" width="500"/>
 
 [Source](https://forum.digikey.com/t/vga-controller-vhdl/12794)
 
@@ -40,7 +40,7 @@ frequencies generated.
 
 For this guide, we'll output at 640x480 @ 60Hz so we'll use the timings/frequencies shown below:
 
-<img src="https://i.imgur.com/zbduxKi.png" width="500">
+<img src="./docs/vga-640x480-timings.png" width="500">
 
 [Source](https://forum.digikey.com/t/vga-controller-vhdl/12794)
 
